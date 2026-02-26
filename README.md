@@ -231,27 +231,72 @@ Faites preuve de pédagogie et soyez clair dans vos explications et procedures d
 **Exercice 1 :**  
 Quels sont les composants dont la perte entraîne une perte de données ?  
   
-*..Répondez à cet exercice ici..*
+Les composants critiques sont :
+
+Le PVC pra-data : il contient la base de données SQLite. Sa perte entraîne la perte immédiate des données.
+
+Le PVC pra-backup : il contient les sauvegardes. S’il est perdu en même temps que pra-data, aucune restauration n’est possible.
+
+Le pod Flask ne stocke aucune donnée, donc sa suppression n’entraîne pas de perte.
 
 **Exercice 2 :**  
 Expliquez nous pourquoi nous n'avons pas perdu les données lors de la supression du PVC pra-data  
   
-*..Répondez à cet exercice ici..*
+Les données ont bien été perdues lors de la suppression du PVC pra-data, mais elles ont été restaurées grâce au PVC pra-backup.
+
+On a :
+
+Recréé le PVC vide
+
+Lancé le job de restauration
+
+Copié la dernière sauvegarde
+
+C’est le principe du PRA : restaurer après incident.
 
 **Exercice 3 :**  
 Quels sont les RTO et RPO de cette solution ?  
   
-*..Répondez à cet exercice ici..*
+RPO : environ 1 minute, car la sauvegarde est faite toutes les minutes.
+On peut donc perdre au maximum 1 minute de données.
+
+RTO : environ 5 à 10 minutes, le temps de recréer l’infrastructure et lancer la restauration.
 
 **Exercice 4 :**  
 Pourquoi cette solution (cet atelier) ne peux pas être utilisé dans un vrai environnement de production ? Que manque-t-il ?   
   
-*..Répondez à cet exercice ici..*
+Cette solution n’est pas adaptée à la production car :
+
+Le stockage n’est pas répliqué
+
+Les sauvegardes sont sur le même cluster
+
+Il n’y a qu’un seul pod
+
+La restauration est manuelle
+
+SQLite n’est pas adapté à une forte charge
+
+Il n’y a pas de monitoring
   
 **Exercice 5 :**  
 Proposez une archtecture plus robuste.   
   
-*..Répondez à cet exercice ici..*
+Architecture plus robuste :
+
+Utiliser PostgreSQL ou MySQL en haute disponibilité
+
+Mettre en place un stockage répliqué
+
+Externaliser les sauvegardes
+
+Déployer plusieurs pods pour l’application
+
+Mettre en place un failover automatique
+
+Ajouter du monitoring et des alertes
+
+Objectif : RPO inférieur à 1 minute et RTO inférieur à 1 minute.
 
 ---------------------------------------------------
 Séquence 6 : Ateliers  
