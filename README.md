@@ -314,7 +314,46 @@ Difficulté : Moyenne (~2 heures)
 ### **Atelier 2 : Choisir notre point de restauration**  
 Aujourd’hui nous restaurobs “le dernier backup”. Nous souhaitons **ajouter la capacité de choisir un point de restauration**.
 
-*..Décrir ici votre procédure de restauration (votre runbook)..*  
+Prérequis
+
+Lister les sauvegardes disponibles pour choisir le fichier à restaurer :
+
+kubectl -n pra run debug-backup --rm -it --image=alpine ...
+Puis faire :
+ls -lh /backup
+exit
+
+Étape 1 — Arrêter l’application et suspendre les sauvegardes
+
+kubectl -n pra scale deployment flask --replicas=0
+kubectl -n pra patch cronjob sqlite-backup -p '{"spec":{"suspend":true}}'
+kubectl -n pra delete job --all
+
+Cela permet d’éviter toute écriture pendant la restauration.
+
+Étape 2 — Supprimer et recréer le PVC pra-data
+
+kubectl -n pra delete pvc pra-data
+kubectl apply -f k8s/
+
+On supprime l’ancien volume et on en recrée un vide.
+
+Étape 3 — Restaurer la sauvegarde choisie
+
+Modifier le fichier de restauration pour indiquer le bon backup :
+
+sed -i 's/CHANGEME.db/app-XXXXXXXXXX.db/' ./pra/51-job-restore-custom.yaml
+
+Puis lancer la restauration :
+
+kubectl apply -f ./pra/51-job-restore-custom.yaml
+
+Étape 4 — Relancer l’application et les sauvegardes
+
+kubectl -n pra patch cronjob sqlite-backup -p '{"spec":{"suspend":false}}'
+kubectl -n pra port-forward svc/flask 8080:80 >/tmp/web.log 2>&1 &
+
+L’application redémarre avec les données restaurées et les sauvegardes reprennent normalement.
   
 ---------------------------------------------------
 Evaluation
